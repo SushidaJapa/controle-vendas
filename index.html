@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sushi da Japa - Painel de Vendas</title>
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:image" content="URL_da_imagem">
+    <meta property="og:title" content="Sushi da Japa - Painel de Vendas">
+    <meta property="og:description" content="Descrição do seu site.">
+    <meta property="og:url" content="https://sushidajapa.github.io/controle-vendas/">
+    <!-- Outras tags meta se necessário -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for dark mode */
+        }
+
+        /* Dark Mode Styles */
+        body.dark {
+            background-color: #121212; /* Very dark background */
+            color: #e0e0e0; /* Light text for contrast */
+        }
+
+        /* Custom Scrollbar (Optional, for better aesthetics) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        body.dark ::-webkit-scrollbar-track {
+            background: #2a2a2a; /* Darker scrollbar track */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        body.dark ::-webkit-scrollbar-thumb {
+            background: #555; /* Darker scrollbar thumb */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        body.dark ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #e0e0e0;
+        }
+        body.dark .progress-bar {
+            background-color: #3a3a3a; /* Darker progress bar background */
+        }
+        .progress-value {
+            height: 100%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Fade-in Animation for Sections */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Navigation Links */
+        .nav-link {
+            @apply px-3 py-2 rounded-lg text-sm md:text-base font-medium text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 ease-in-out;
+            white-space: nowrap;
+            flex-grow: 1;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        body.dark .nav-link {
+            @apply text-gray-300 hover:bg-gray-700 hover:text-blue-400; /* Dark mode nav links */
+        }
+        .nav-link.active {
+            @apply bg-blue-600 text-white shadow-md hover:bg-blue-700;
+        }
+        body.dark .nav-link.active {
+            @apply bg-blue-700 text-white shadow-md hover:bg-blue-800; /* Dark mode active nav link */
+        }
+
+        /* Card Styles */
+        .card {
+            @apply bg-white rounded-xl shadow-lg p-5 sm:p-6 border-l-4;
+            transition: transform 0.2s ease-in-out, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark .card {
+            background-color: #1a1a1a; /* Darker card background */
+            border-color: #333; /* Darker border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15); /* Darker shadow */
+        }
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Medal Colors */
+        .border-bronze { border-color: #CD7F32; }
+        .bg-bronze-progress { background-color: #CD7F32; }
+        .text-bronze-dark { color: #CD7F32; }
+
+        .border-silver { border-color: #C0C0C0; }
+        .bg-silver-progress { background-color: #C0C0C0; }
+        .text-silver-dark { color: #C0C0C0; }
+
+        .border-gold { border-color: #FFD700; }
+        .bg-gold-progress { background-color: #FFD700; }
+        .text-gold-dark { color: #FFD700; }
+
+        /* Input Focus Styles */
+        input:focus, select:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #4F83CC;
+            border-color: #4F83CC;
+        }
+        body.dark input, body.dark select {
+            background-color: #2a2a2a; /* Darker input background */
+            border-color: #444; /* Darker input border */
+            color: #f1f1f1; /* Light text in inputs */
+        }
+        body.dark input::placeholder {
+            color: #bbb; /* Lighter placeholder text */
+        }
+        body.dark input:focus, body.dark select:focus, body.dark button:focus {
+            box-shadow: 0 0 0 2px #6a9ee6; /* Dark mode focus ring */
+            border-color: #6a9ee6; /* Dark mode border color on focus */
+        }
+
+        /* Specific styles for mobile table */
+        @media (max-width: 767px) {
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .table-responsive table {
+                width: 100%;
+                min-width: 600px;
+                font-size: 0.875rem;
+            }
+            .table-responsive th, .table-responsive td {
+                padding: 0.5rem;
+                white-space: nowrap;
+            }
+            .financial-summary-table table {
+                min-width: 100%;
+            }
+            /* Adjust header for smaller screens */
+            .header-content {
+                flex-direction: column;
+                align-items: center;
+            }
+            .header-period-nav {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: center;
+            }
+            .header-period-nav button {
+                padding: 0.5rem;
+            }
+            .header-period-nav span {
+                font-size: 1rem;
+            }
+            .nav-links-container {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                justify-content: flex-start;
+                padding-bottom: 8px;
+                scrollbar-width: none;
+            }
+            .nav-links-container::-webkit-scrollbar {
+                display: none;
+            }
+            .nav-link {
+                flex-shrink: 0;
+                min-width: 100px;
+            }
+        }
+
+        /* Modal Animation */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.3s ease-out forwards;
+        }
+        .modal-content {
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark .modal-content {
+            background-color: #1a1a1a; /* Darker modal background */
+            color: #e0e0e0; /* Light text in modals */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2); /* Darker modal shadow */
+        }
+        body.dark .modal-content label {
+            color: #f1f1f1; /* Light label text */
+        }
+        body.dark .modal-content button {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        body.dark .modal-content button.bg-blue-600 {
+            @apply bg-blue-700 hover:bg-blue-800;
+        }
+        body.dark .modal-content button.bg-red-600 {
+            @apply bg-red-700 hover:bg-red-800;
+        }
+        body.dark .modal-content button.border-gray-300 {
+            @apply border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-700;
+        }
+
+        /* Toast Notification Styles */
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out, background-color 0.3s ease;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.bg-green-500 { background-color: #22C55E; }
+        .toast.bg-red-500 { background-color: #EF4444; }
+        .toast.bg-blue-500 { background-color: #3B82F6; }
+        .toast.bg-gray-800 { background-color: #1F2937; }
+
+        /* Gamification Styles */
+        .medal-icon {
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .medal-bronze-fill { fill: #CD7F32; }
+        .medal-silver-fill { fill: #C0C0C0; }
+        .medal-gold-fill { fill: #FFD700; }
+
+        /* Financial Summary Table */
+        .financial-summary-table {
+            @apply bg-white rounded-xl shadow-lg p-5 sm:p-6 mt-8 border border-gray-200;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark .financial-summary-table {
+            background-color: #1a1a1a; /* Darker table background */
+            border-color: #333; /* Darker table border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        .financial-summary-table h3 {
+            @apply text-xl sm:text-2xl font-bold text-gray-800 mb-4;
+        }
+        body.dark .financial-summary-table h3 {
+            color: #f1f1f1; /* Light heading text */
+        }
+        .financial-summary-table table {
+            @apply min-w-full divide-y divide-gray-200;
+        }
+        body.dark .financial-summary-table table {
+            border-color: #444; /* Darker table dividers */
+        }
+        .financial-summary-table th, .financial-summary-table td {
+            @apply px-4 py-3 text-center text-sm font-medium text-gray-700 uppercase tracking-wider;
+        }
+        body.dark .financial-summary-table th, body.dark .financial-summary-table td {
+            color: #e0e0e0; /* Light table text */
+        }
+        .financial-summary-table thead th {
+            @apply bg-blue-700 text-white;
+        }
+        body.dark .financial-summary-table thead th {
+            @apply bg-blue-800 text-white; /* Darker header background */
+        }
+        .financial-summary-table tbody tr:nth-child(even) {
+            @apply bg-blue-50;
+        }
+        body.dark .financial-summary-table tbody tr:nth-child(even) {
+            background-color: #2a2a2a; /* Darker even row background */
+        }
+        .financial-summary-table tbody tr:hover {
+            @apply bg-blue-100;
+        }
+        body.dark .financial-summary-table tbody tr:hover {
+            background-color: #3a3a3a; /* Darker hover background */
+        }
+        .financial-summary-table .total-row {
+            @apply bg-blue-800 text-white font-bold;
+        }
+        body.dark .financial-summary-table .total-row {
+            @apply bg-blue-900 text-white font-bold; /* Even darker total row */
+        }
+        .financial-summary-table .total-row td {
+            @apply text-lg;
+        }
+        .financial-summary-table .profit-value {
+            @apply font-bold;
+        }
+        .financial-summary-table .profit-value.positive {
+            @apply text-green-600;
+        }
+        body.dark .financial-summary-table .profit-value.positive {
+            @apply text-green-400; /* Lighter green for dark mode */
+        }
+        .financial-summary-table .profit-value.negative {
+            @apply text-red-600;
+        }
+        body.dark .financial-summary-table .profit-value.negative {
+            @apply text-red-400; /* Lighter red for dark mode */
+        }
+        .financial-summary-table .profit-percent {
+            @apply font-bold;
+        }
+        .financial-summary-table .profit-percent.positive {
+            @apply text-green-600;
+        }
+        body.dark .financial-summary-table .profit-percent.positive {
+            @apply text-green-400;
+        }
+        .financial-summary-table .profit-percent.negative {
+            @apply text-red-600;
+        }
+        body.dark .financial-summary-table .profit-percent.negative {
+            @apply text-red-400;
+        }
+
+        /* Header specific dark mode adjustments */
+        body.dark header {
+            background-color: #1a1a1a;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        body.dark header h1, body.dark header p {
+            color: #f1f1f1;
+        }
+        body.dark .header-period-nav .bg-gray-50 {
+            background-color: #2a2a2a;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        body.dark .header-period-nav button {
+            color: #bbb;
+            @apply hover:bg-gray-700;
+        }
+        body.dark .header-period-nav span {
+            color: #f1f1f1;
+        }
+        body.dark .border-gray-200 {
+            border-color: #333;
+        }
+        /* General text and background color adjustments for dark mode */
+        body.dark .bg-gray-50 {
+            background-color: #2a2a2a;
+        }
+        body.dark .text-gray-700 {
+            color: #e0e0e0;
+        }
+        body.dark .text-gray-600 {
+            color: #bbb;
+        }
+        body.dark .text-gray-500 {
+            color: #999;
+        }
+        body.dark .text-gray-800 {
+            color: #f1f1f1;
+        }
+        body.dark .text-gray-900 {
+            color: #f1f1f1;
+        }
+        /* Specific for launches section */
+        body.dark #launches { /* Target the main launches section */
+            background-color: #1a1a1a; /* Darker background for the entire section */
+            border-color: #333;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        }
+        body.dark #launches .bg-gray-50 { /* For the form and filter containers */
+            background-color: #1a1a1a; /* Darker background for these sections */
+            border-color: #333;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        body.dark #launches .bg-white { /* For the table body */
+            background-color: #1a1a1a;
+        }
+        body.dark #launches .bg-gray-100 { /* For the table footer */
+            background-color: #2a2a2a;
+        }
+        body.dark #launches .divide-gray-200 { /* For table dividers */
+            border-color: #444;
+        }
+        body.dark #launches .text-gray-500 { /* For table cell text */
+            color: #e0e0e0;
+        }
+        body.dark #launches .text-gray-900 { /* For table value text */
+            color: #f1f1f1;
+        }
+        body.dark #launches .total-row {
+            background-color: #2a2a2a; /* Darker total row */
+        }
+        body.dark #launches .total-row td {
+            color: #f1f1f1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-6 sm:py-8 md:py-10">
+        <header class="mb-8 md:mb-12 bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 header-content">
+                <div class="text-center md:text-left mb-4 md:mb-0">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-1 sm:mb-2">Sushi da Japa</h1>
+                    <p class="text-gray-600 text-lg sm:text-xl">Painel de Monitoramento e Análise de Vendas</p>
+                </div>
+                <div class="flex items-center space-x-3 sm:space-x-4 mt-4 md:mt-0 header-period-nav">
+                    <div class="flex items-center space-x-2 sm:space-x-3 bg-gray-50 rounded-full px-3 py-1 sm:px-4 sm:py-2 shadow-inner">
+                        <button id="prevPeriodBtn" class="p-1 sm:p-2 rounded-full hover:bg-gray-200 transition-all duration-200" aria-label="Mês Anterior">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <span id="currentPeriodLabel" class="font-bold text-base sm:text-xl text-gray-800">Julho 2023</span>
+                        <button id="nextPeriodBtn" class="p-1 sm:p-2 rounded-full hover:bg-gray-200 transition-all duration-200" aria-label="Próximo Mês">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- Dark Mode Toggle Button -->
+                    <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300" aria-label="Alternar Modo Escuro">
+                        <svg id="darkModeIcon" class="h-6 w-6 text-gray-800 dark:text-yellow-300 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Sun Icon (default) -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M2 12h1m15.325-6.675l-.707-.707M6.675 17.325l-.707-.707M17.325 6.675l.707-.707M6.675 6.675l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Navegação entre seções -->
+            <nav class="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-6 mt-4 pt-4 border-t border-gray-200 nav-links-container">
+                <a href="#overview" class="nav-link active" data-section="overview">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l7 7m-2 2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Visão Geral
+                </a>
+                <a href="#reports" class="nav-link" data-section="reports">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 2v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Relatórios
+                </a>
+                <a href="#launches" class="nav-link" data-section="launches">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V4m0 12v4m-6-2h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Lançamentos
+                </a>
+            </nav>
+        </header>
+
+        <!-- Seção: Visão Geral (Cards de Resumo) -->
+        <section id="overview" class="mb-8 md:mb-12 fade-in">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 md:mb-8">Visão Geral do Desempenho</h2>
+            
+            <!-- Grupo: Resumo Mensal -->
+            <div class="mb-8">
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">Resumo Mensal</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    <!-- Card 1: Vendas Mensais -->
+                    <div class="card border-green-500">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">Vendas Mensais</h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="monthlyAchievedAmount">R$ 0,00</p>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-semibold dark:bg-green-700 dark:text-green-100">Mês Atual</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3">Total de vendas realizadas no mês corrente.</p>
+                    </div>
+
+                    <!-- Card 2: Comparativo Mensal -->
+                    <div class="card border-blue-500">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">Comparativo Mensal</h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="monthlyComparisonValue">R$ 0,00</p>
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold" id="monthlyComparisonPercent">0%</span>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <p>Mês Anterior: <span id="lastMonthAmount" class="font-medium">R$ 0,00</span></p>
+                            <p class="mt-1 text-xs text-gray-500" id="monthlyComparisonText"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Suas Metas de Vendas -->
+            <div class="mb-8">
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">Sua Meta de Vendas</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    <!-- Card 3: Ponto de Equilíbrio (Meta Bronze) -->
+                    <div class="card border-bronze">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">
+                            <svg class="medal-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="medal-bronze-fill" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path class="medal-bronze-fill" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2l-2.81 6.63L2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            Ponto de Equilíbrio
+                        </h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="breakEvenAchieved">R$ 0,00</p>
+                            <button onclick="openGoalEditModal('breakEven')" class="ml-2 text-bronze-dark hover:text-orange-800 transition-colors" aria-label="Editar Meta Bronze">
+                                <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Meta Bronze: <span id="breakEvenAmount" class="font-medium">R$ 146.000,00</span></span>
+                                <span id="breakEvenPercentage" class="font-medium">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="breakEvenProgress" class="progress-value bg-bronze-progress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3" id="breakEvenComparisonText"></p>
+                        <p class="text-gray-700 text-sm mt-2 font-semibold">Meta Diária: <span id="breakEvenDailyGoal" class="font-bold">R$ 0,00</span></p>
+                    </div>
+
+                    <!-- Card 4: Meta de Faturamento (Meta Prata) -->
+                    <div class="card border-silver">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">
+                            <svg class="medal-icon w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path class="medal-silver-fill" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path class="medal-silver-fill" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2l-2.81 6.63L2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            Meta de Faturamento
+                        </h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="revenueGoalAchieved">R$ 0,00</p>
+                            <button onclick="openGoalEditModal('revenueGoal')" class="ml-2 text-silver-dark hover:text-gray-700 transition-colors" aria-label="Editar Meta Prata">
+                                <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Meta Prata: <span id="revenueGoalAmount" class="font-medium">R$ 0,00</span></span>
+                                <span id="revenueGoalPercentage" class="font-medium">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="revenueGoalProgress" class="progress-value bg-silver-progress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3" id="revenueGoalComparisonText"></p>
+                        <p class="text-gray-700 text-sm mt-2 font-semibold">Meta Diária: <span id="revenueGoalDailyGoal" class="font-bold">R$ 0,00</span></p>
+                    </div>
+
+                    <!-- Card 5: Meta de Crescimento (Meta Ouro) -->
+                    <div class="card border-gold">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">
+                            <svg class="medal-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path class="medal-gold-fill" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path class="medal-gold-fill" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2l-2.81 6.63L2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            Meta de Crescimento
+                        </h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="growthGoalAchieved">R$ 0,00</p>
+                            <button onclick="openGoalEditModal('growthGoal')" class="ml-2 text-gold-dark hover:text-yellow-700 transition-colors" aria-label="Editar Meta Ouro">
+                                <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Meta Ouro: <span id="growthGoalAmount" class="font-medium">R$ 0,00</span></span>
+                                <span id="growthGoalPercentage" class="font-medium">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="growthGoalProgress" class="progress-value bg-gold-progress" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3" id="growthGoalComparisonText"></p>
+                        <p class="text-gray-700 text-sm mt-2 font-semibold">Meta Diária: <span id="growthGoalDailyGoal" class="font-bold">R$ 0,00</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Resultados Financeiros -->
+            <div class="mb-8">
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">Resultados Financeiros</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    <!-- Card: Custo Mensal -->
+                    <div class="card border-orange-500">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">Custo Mensal</h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="monthlyCostAmount">R$ 0,00</p>
+                            <button onclick="openGoalEditModal('monthlyCost')" class="ml-2 text-orange-500 hover:text-orange-700 transition-colors" aria-label="Editar Custo Mensal">
+                                <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3">Custo total de produtos/serviços vendidos no mês.</p>
+                    </div>
+
+                    <!-- Card: Margem de Lucro -->
+                    <div class="card border-teal-500">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">Margem de Lucro</h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-2xl sm:text-3xl font-extrabold text-gray-900" id="profitMarginAmount">R$ 0,00</p>
+                            <span class="text-xs px-2 py-1 rounded-full font-semibold" id="profitMarginPercent">0%</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3" id="profitMarginText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Configurações Gerais -->
+            <div class="mb-8">
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4">Configurações Gerais</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                    <!-- Card: Dias Trabalhados no Mês -->
+                    <div class="card border-purple-500">
+                        <h3 class="text-gray-500 font-semibold text-sm uppercase mb-2">Dias Trabalhados (Mês Atual)</h3>
+                        <div class="flex items-center justify-between mt-2">
+                            <input type="number" id="daysInMonthOverride" class="w-20 sm:w-24 border border-gray-300 rounded-md px-3 py-2 text-xl sm:text-2xl font-bold text-gray-900 focus:ring-purple-500 focus:border-purple-500" value="30" min="1" max="31" aria-label="Número de dias trabalhados no mês">
+                            <button onclick="updateDaysInMonth()" class="ml-2 sm:ml-3 bg-purple-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-purple-700 transition-colors shadow-md">
+                                Atualizar
+                            </button>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-3">Define o número de dias para cálculo da meta diária.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção: Relatórios Detalhados -->
+        <section id="reports" class="mb-8 md:mb-12 fade-in hidden">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 md:mb-8">Relatórios Detalhados de Vendas</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8">
+                
+                <!-- NOVO GRÁFICO: Desempenho Mensal (Vendas Diárias) - AGORA O PRIMEIRO -->
+                <div class="card lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-3 sm:mb-0">Desempenho Mensal (Vendas Diárias)</h3>
+                        <!-- Filtro de data removido para este gráfico -->
+                    </div>
+                    <div class="h-80 sm:h-96">
+                        <canvas id="dailyPerformanceChart" role="img" aria-label="Gráfico de Desempenho Mensal (Vendas Diárias)"></canvas>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-4">Vendas diárias comparadas com a meta diária de faturamento. Barras verdes indicam meta atingida, vermelhas indicam abaixo da meta.</p>
+                </div>
+
+                <!-- Gráfico de Distribuição de Vendas por Dia da Semana com Filtro de Período -->
+                <div class="card">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-3 sm:mb-0">Distribuição de Vendas por Dia da Semana</h3>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                            <input type="month" id="distributionStartDateFilter" class="w-full sm:w-auto border border-gray-300 rounded-md px-3 py-1 text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Data de início para filtro de distribuição">
+                            <input type="month" id="distributionEndDateFilter" class="w-full sm:w-auto border border-gray-300 rounded-md px-3 py-1 text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Data de fim para filtro de distribuição">
+                            <button onclick="applyDistributionFilter()" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-md">Aplicar</button>
+                        </div>
+                    </div>
+                    <div class="h-64 sm:h-80">
+                        <canvas id="salesDistributionChart" role="img" aria-label="Gráfico de Distribuição de Vendas por Dia da Semana"></canvas>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-4">Total de vendas agrupado por dia da semana no período selecionado.</p>
+                </div>
+
+                <!-- Gráfico de Comparativo Mensal com Filtro de Período -->
+                <div class="card">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-3 sm:mb-0">Comparativo de Vendas Mensais</h3>
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                            <input type="month" id="comparisonStartDateFilter" class="w-full sm:w-auto border border-gray-300 rounded-md px-3 py-1 text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Data de início para filtro de comparação">
+                            <input type="month" id="comparisonEndDateFilter" class="w-full sm:w-auto border border-gray-300 rounded-md px-3 py-1 text-gray-700 text-sm focus:ring-blue-500 focus:border-blue-500" aria-label="Data de fim para filtro de comparação">
+                            <button onclick="applyComparisonFilter()" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors shadow-md">Aplicar</button>
+                        </div>
+                    </div>
+                    <div class="h-64 sm:h-80">
+                        <canvas id="monthlyComparisonChart" role="img" aria-label="Gráfico de Comparativo de Vendas Mensais"></canvas>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-4">Comparação do total de vendas entre os meses no período selecionado.</p>
+                    
+                    <!-- Financial Summary Table for Reports -->
+                    <div class="financial-summary-table">
+                        <h3>Resultados Detalhados do Período 📊</h3>
+                        <div class="table-responsive">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th>Mês/Ano</th>
+                                        <th>Vendas Totais</th>
+                                        <th>Custos Mensais</th>
+                                        <th>Margem de Lucro (R$)</th>
+                                        <th>Margem de Lucro (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparisonSummaryTableBody">
+                                    <!-- Data will be inserted here by JavaScript -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="total-row">
+                                        <td class="font-bold">Total Geral:</td>
+                                        <td id="reportTotalSales" class="font-bold">R$ 0,00</td>
+                                        <td id="reportTotalCosts" class="font-bold">R$ 0,00</td>
+                                        <td id="reportProfitMargin" class="profit-value">R$ 0,00</td>
+                                        <td id="reportProfitPercent" class="profit-percent">0%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção: Lançamentos -->
+        <section id="launches" class="bg-white rounded-xl shadow-xl p-6 sm:p-8 fade-in hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-4 md:mb-0">Gerenciar Lançamentos de Vendas</h2>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                    <button class="text-blue-600 hover:text-blue-800 text-sm sm:text-base font-medium px-3 py-2 rounded-md transition-colors dark:text-blue-400 dark:hover:text-blue-300" onclick="clearForm()">
+                        Limpar Formulário
+                    </button>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm sm:text-base font-medium hover:bg-blue-700 transition-colors shadow-md dark:bg-blue-700 dark:hover:bg-blue-800" onclick="addLaunch()">
+                        Adicionar Lançamento
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Formulário de Lançamento -->
+            <div class="mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg border border-gray-200 shadow-inner dark:bg-gray-800 dark:border-gray-700">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4 dark:text-gray-200">Registrar Nova Venda</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    <div>
+                        <label for="launchDate" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Data</label>
+                        <input type="text" id="launchDate" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-sm" aria-label="Data do lançamento">
+                    </div>
+                    <div>
+                        <label for="revenue" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Valor Vendido (R$)</label>
+                        <input type="text" id="revenue" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="1.500,00" inputmode="decimal" aria-label="Valor vendido">
+                    </div>
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Observações (Opcional)</label>
+                        <input type="text" id="notes" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Anaurilândia" aria-label="Observações sobre o lançamento">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros Adicionais -->
+            <div class="mb-6 sm:mb-8 p-4 sm:p-6 bg-gray-50 rounded-lg border border-gray-200 shadow-inner dark:bg-gray-800 dark:border-gray-700">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-3 sm:mb-4 dark:text-gray-200">Filtrar Lançamentos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <div>
+                        <label for="startDateFilter" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Data Inicial</label>
+                        <input type="text" id="startDateFilter" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Data inicial para filtro">
+                    </div>
+                    <div>
+                        <label for="endDateFilter" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Data Final</label>
+                        <input type="text" id="endDateFilter" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Data final para filtro">
+                    </div>
+                    <div>
+                        <label for="filterNotes" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2 dark:text-gray-200">Observações (Filtro)</label>
+                        <input type="text" id="filterNotes" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Anaurilândia" aria-label="Filtrar por observações">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="applyFilters()" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm sm:text-base font-medium hover:bg-blue-700 transition-colors w-full shadow-md dark:bg-blue-700 dark:hover:bg-blue-800">
+                            Aplicar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabela -->
+            <div class="table-responsive border border-gray-200 rounded-lg shadow-md dark:border-gray-700">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">Data</th>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">Valor</th>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">Observações</th>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700" id="launchesTableBody">
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 sm:px-6 sm:py-4 text-center text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento registrado</td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="bg-gray-100 dark:bg-gray-800">
+                        <tr class="total-row">
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 text-left text-sm font-bold text-gray-800 dark:text-gray-100" colspan="1">Total Filtrado:</td>
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 text-left text-sm font-bold text-gray-800 dark:text-gray-100" id="filteredTotalAmount">R$ 0,00</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Paginação - REMOVIDA -->
+            <div class="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-between items-center hidden">
+                <div class="text-sm text-gray-600 mb-2 sm:mb-0">
+                    Mostrando <span id="showingFrom" class="font-medium">1</span> a <span id="showingTo" class="font-medium">10</span> de <span id="totalItems" class="font-medium">0</span> registros
+                </div>
+                <div class="flex space-x-2 sm:space-x-3">
+                    <button id="prevPageBtn" class="px-3 py-1 sm:px-4 sm:py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors" aria-label="Página Anterior">
+                        Anterior
+                    </button>
+                    <button id="nextPageBtn" class="px-3 py-1 sm:px-4 sm:py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors" aria-label="Próxima Página">
+                        Próxima
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal de Edição de Lançamento -->
+    <div id="editLaunchModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="editLaunchModalTitle">
+        <div class="bg-white rounded-xl p-6 sm:p-8 w-full max-w-md shadow-2xl transform scale-95 animate-fade-in-up modal-content">
+            <div class="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 id="editLaunchModalTitle" class="text-xl sm:text-2xl font-bold text-gray-800">Editar Lançamento</h3>
+                <button onclick="closeEditLaunchModal()" class="text-gray-500 hover:text-gray-700 transition-colors" aria-label="Fechar Modal">
+                    <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4 sm:space-y-5">
+                <div>
+                    <label for="editLaunchDate" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Data</label>
+                    <input type="text" id="editLaunchDate" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Data do lançamento a ser editado">
+                </div>
+                <div>
+                    <label for="editRevenue" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Valor Vendido (R$)</label>
+                    <input type="text" id="editRevenue" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" inputmode="decimal" aria-label="Valor vendido a ser editado">
+                </div>
+                <div>
+                    <label for="editNotes" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Observações</label>
+                    <input type="text" id="editNotes" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" aria-label="Observações a serem editadas">
+                </div>
+            </div>
+            <div class="mt-6 sm:mt-8 flex justify-end space-x-3 sm:space-x-4">
+                <button onclick="closeEditLaunchModal()" class="px-4 py-2 sm:px-5 sm:py-2 border border-gray-300 rounded-md text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="saveEditedLaunch()" class="px-4 py-2 sm:px-5 sm:py-2 bg-blue-600 text-white rounded-md text-sm sm:text-base font-medium hover:bg-blue-700 transition-colors shadow-md">
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Meta/Custo -->
+    <div id="editGoalModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="editGoalModalTitle">
+        <div class="bg-white rounded-xl p-6 sm:p-8 w-full max-w-md shadow-2xl transform scale-95 animate-fade-in-up modal-content">
+            <div class="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 id="editGoalModalTitle" class="text-xl sm:text-2xl font-bold text-gray-800">Editar Meta</h3>
+                <button onclick="closeEditGoalModal()" class="text-gray-500 hover:text-gray-700 transition-colors" aria-label="Fechar Modal">
+                    <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4 sm:space-y-5">
+                <div>
+                    <label for="editGoalValue" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Novo Valor (R$)</label>
+                    <input type="text" id="editGoalValue" class="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 sm:py-2 focus:ring-blue-500 focus:border-blue-500" inputmode="decimal" aria-label="Novo valor da meta">
+                </div>
+            </div>
+            <div class="mt-6 sm:mt-8 flex justify-end space-x-3 sm:space-x-4">
+                <button onclick="closeEditGoalModal()" class="px-4 py-2 sm:px-5 sm:py-2 border border-gray-300 rounded-md text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="saveEditedGoal()" class="px-4 py-2 sm:px-5 sm:py-2 bg-blue-600 text-white rounded-md text-sm sm:text-base font-medium hover:bg-blue-700 transition-colors shadow-md">
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteModalTitle">
+        <div class="bg-white rounded-xl p-6 sm:p-8 w-full max-w-md shadow-2xl transform scale-95 animate-fade-in-up modal-content">
+            <div class="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 id="confirmDeleteModalTitle" class="text-xl sm:text-2xl font-bold text-gray-800">Confirmar Exclusão</h3>
+                <button onclick="closeConfirmDeleteModal()" class="text-gray-500 hover:text-gray-700 transition-colors" aria-label="Fechar Modal">
+                    <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-gray-700 mb-6">Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.</p>
+            <div class="mt-6 sm:mt-8 flex justify-end space-x-3 sm:space-x-4">
+                <button onclick="closeConfirmDeleteModal()" class="px-4 py-2 sm:px-5 sm:py-2 border border-gray-300 rounded-md text-sm sm:text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 sm:px-5 sm:py-2 bg-red-600 text-white rounded-md text-sm sm:text-base font-medium hover:bg-red-700 transition-colors shadow-md">
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script>
+        // ** COLE SUAS CREDENCIAIS DO FIREBASE AQUI **
+        // Lembrete de Segurança: Para aplicações em produção, evite expor chaves de API diretamente no frontend.
+        // Considere usar Firebase Authentication e regras de segurança no Realtime Database.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtR22kf0booeDQKpk1jTX2SRryBg5IeG8",
+            authDomain: "controle-de-vendas-282c4.firebaseapp.com",
+            databaseURL: "https://controle-de-vendas-282c4-default-rtdb.firebaseio.com",
+            projectId: "controle-de-vendas-282c4",
+            storageBucket: "controle-de-vendas-282c4.appspot.com",
+            messagingSenderId: "1091374054185",
+            appId: "1:1091374054185:web:130e347500b7536e361538"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const launchesRef = database.ref('launches'); // Referência para os lançamentos
+        const monthlyGoalsRef = database.ref('monthlyGoals'); // Referência para as metas mensais
+
+        // Dados globais
+        let launches = []; 
+        let monthlyGoals = {}; 
+        
+        let currentDate = new Date(); // Representa o primeiro dia do mês atual para navegação
+        let currentEditLaunchId = null; // ID do lançamento sendo editado
+        let currentEditGoalType = null; // Tipo de meta/custo sendo editado
+
+        let activeFilters = {
+            startDate: null, // Date object
+            endDate: null,   // Date object
+            filterNotes: ''  // Novo filtro para observações
+        };
+
+        // Instâncias dos gráficos
+        let salesDistributionChart, monthlyComparisonChart, dailyPerformanceChart; 
+
+        // Variáveis para armazenar as instâncias do Flatpickr
+        let fpLaunchDate, fpStartDateFilter, fpEndDateFilter, fpEditLaunchDate;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize dark mode based on localStorage or system preference
+            initTheme();
+
+            currentDate.setDate(1); // Garante que a data seja sempre o primeiro dia do mês
+
+            // Inicializa Flatpickr para inputs de data
+            initializeFlatpickrInstances();
+
+            // Define datas iniciais para filtros de lançamento
+            const firstDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            
+            fpLaunchDate.setDate(new Date(), true); // Define a data atual no campo de novo lançamento
+            fpStartDateFilter.setDate(firstDayOfCurrentMonth, true);
+            fpEndDateFilter.setDate(lastDayOfCurrentMonth, true);
+            
+            // Aplica os filtros iniciais para a tabela de lançamentos
+            activeFilters.startDate = firstDayOfCurrentMonth;
+            activeFilters.endDate = lastDayOfCurrentMonth;
+
+            // Carrega dados do Firebase e atualiza a UI
+            await loadDataFromFirebase(); // Aguarda o carregamento inicial dos dados
+            
+            // Define as datas iniciais e finais dos filtros de comparação e distribuição
+            document.getElementById('comparisonStartDateFilter').value = formatDateToYYYYMM(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1));
+            document.getElementById('comparisonEndDateFilter').value = formatDateToYYYYMM(firstDayOfCurrentMonth); 
+
+            document.getElementById('distributionStartDateFilter').value = formatDateToYYYYMM(firstDayOfCurrentMonth);
+            document.getElementById('distributionEndDateFilter').value = formatDateToYYYYMM(lastDayOfCurrentMonth);
+
+            initCharts();
+            setupEventListeners();
+            showSection('overview'); // Exibe a seção de visão geral por padrão
+        });
+
+        function initializeFlatpickrInstances() {
+            fpLaunchDate = flatpickr("#launchDate", {
+                dateFormat: "d/m/Y",
+                locale: "pt",
+                defaultDate: new Date()
+            });
+            fpStartDateFilter = flatpickr("#startDateFilter", {
+                dateFormat: "d/m/Y",
+                locale: "pt"
+            });
+            fpEndDateFilter = flatpickr("#endDateFilter", {
+                dateFormat: "d/m/Y",
+                locale: "pt"
+            });
+            fpEditLaunchDate = flatpickr("#editLaunchDate", {
+                dateFormat: "d/m/Y",
+                locale: "pt"
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('prevPeriodBtn').addEventListener('click', () => navigatePeriod(-1));
+            document.getElementById('nextPeriodBtn').addEventListener('click', () => navigatePeriod(1));
+            
+            document.getElementById('comparisonStartDateFilter').addEventListener('change', applyComparisonFilter);
+            document.getElementById('comparisonEndDateFilter').addEventListener('change', applyComparisonFilter);
+            document.getElementById('distributionStartDateFilter').addEventListener('change', applyDistributionFilter);
+            document.getElementById('distributionEndDateFilter').addEventListener('change', applyDistributionFilter);
+
+            document.getElementById('revenue').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addLaunch();
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault(); 
+                    const sectionId = this.dataset.section; 
+                    showSection(sectionId); 
+                });
+            });
+
+            // Dark Mode Toggle
+            document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
+
+            // Fechar modais com ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (!document.getElementById('editLaunchModal').classList.contains('hidden')) {
+                        closeEditLaunchModal();
+                    }
+                    if (!document.getElementById('editGoalModal').classList.contains('hidden')) {
+                        closeEditGoalModal();
+                    }
+                    if (!document.getElementById('confirmDeleteModal').classList.contains('hidden')) {
+                        closeConfirmDeleteModal();
+                    }
+                }
+            });
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(sectionId).classList.add('fade-in');
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`.nav-link[data-section="${sectionId}"]`).classList.add('active');
+
+            // Atualiza dados dos gráficos e tabela de lançamentos ao mudar de seção
+            if (sectionId === 'reports') {
+                updateChartsData();
+            }
+            if (sectionId === 'launches') {
+                // Garante que os campos de filtro de data do Flatpickr estejam com o locale correto
+                // e que a tabela seja atualizada com os filtros ativos.
+                fpStartDateFilter.setDate(activeFilters.startDate, true);
+                fpEndDateFilter.setDate(activeFilters.endDate, true);
+                // Define o valor do campo de filtro de observações
+                document.getElementById('filterNotes').value = activeFilters.filterNotes;
+                updateLaunchesTable(); 
+            }
+        }
+
+        // ** DARK MODE FUNCTIONS **
+        function initTheme() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+
+            if (savedTheme === 'dark' || (savedTheme === null && prefersDark)) {
+                document.body.classList.add('dark');
+                updateDarkModeIcon(true);
+            } else {
+                document.body.classList.remove('dark');
+                updateDarkModeIcon(false);
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDarkMode = document.body.classList.toggle('dark');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+            updateDarkModeIcon(isDarkMode);
+            // Re-render charts to apply new theme colors
+            updateChartsData();
+        }
+
+        function updateDarkModeIcon(isDarkMode) {
+            const iconContainer = document.getElementById('darkModeIcon');
+            if (isDarkMode) {
+                iconContainer.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                `; // Moon Icon
+            } else {
+                iconContainer.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h1M2 12h1m15.325-6.675l-.707-.707M6.675 17.325l-.707-.707M17.325 6.675l.707-.707M6.675 6.675l.707-.707M12 7a5 5 0 100 10 5 5 0 000-10z"></path>
+                `; // Sun Icon
+            }
+        }
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (localStorage.getItem('theme') === null) { // Only auto-adjust if user hasn't manually set a preference
+                initTheme();
+                updateChartsData(); // Update charts if theme changes
+            }
+        });
+
+        // ** FIREBASE INTERACTION FUNCTIONS **
+
+        async function loadDataFromFirebase() {
+            const loadLaunches = new Promise((resolve, reject) => {
+                launchesRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    launches = [];
+                    if (data) {
+                        for (let id in data) {
+                            launches.push({ id, ...data[id], date: new Date(data[id].date) });
+                        }
+                    }
+                    applyFilters(); 
+                    resolve();
+                }, (errorObject) => {
+                    console.error("Firebase Error (launches):", errorObject);
+                    showToast(`Error loading launches: ${errorObject.message || errorObject.code}`, 'error');
+                    reject(errorObject);
+                });
+            });
+
+            const loadMonthlyGoals = new Promise((resolve, reject) => {
+                monthlyGoalsRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    monthlyGoals = data || {};
+                    resolve();
+                }, (errorObject) => {
+                    console.error("Firebase Error (goals):", errorObject);
+                    showToast(`Error loading monthly goals: ${errorObject.message || errorObject.code}`, 'error');
+                    reject(errorObject);
+                });
+            });
+
+            try {
+                await Promise.all([loadLaunches, loadMonthlyGoals]);
+                await getMonthlyGoals(currentDate); 
+                updateUI(); 
+            } catch (error) {
+                console.error("Critical error loading initial Firebase data:", error);
+                showToast("Critical error loading initial data.", 'error');
+            }
+        }
+
+        function calculateWorkingDaysInMonth(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            let workingDays = 0;
+            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 1; i <= totalDaysInMonth; i++) {
+                const day = new Date(year, month, i);
+                if (day.getDay() !== 0) {
+                    workingDays++;
+                }
+            }
+            return workingDays;
+        }
+
+        function getMonthlyGoals(date) {
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            const defaultWorkingDaysInMonth = calculateWorkingDaysInMonth(date);
+
+            const defaultGoals = {
+                breakEven: 146000, 
+                revenueGoal: 155000, 
+                growthGoal: 166000, 
+                daysInMonthOverride: defaultWorkingDaysInMonth,
+                monthlyCost: 0 
+            };
+
+            return new Promise((resolve, reject) => {
+                monthlyGoalsRef.child(monthKey).transaction((currentData) => {
+                    let updatedData = currentData || {};
+                    let changed = false;
+
+                    for (const key in defaultGoals) {
+                        if (typeof updatedData[key] === 'undefined' || isNaN(updatedData[key]) || updatedData[key] === null) {
+                            updatedData[key] = defaultGoals[key];
+                            changed = true;
+                        }
+                    }
+
+                    const totalDaysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+                    if (typeof updatedData.daysInMonthOverride === 'undefined' || 
+                        isNaN(updatedData.daysInMonthOverride) || 
+                        updatedData.daysInMonthOverride <= 0 || 
+                        updatedData.daysInMonthOverride > totalDaysInMonth) {
+                        updatedData.daysInMonthOverride = defaultWorkingDaysInMonth;
+                        changed = true;
+                    } else {
+                        const intValue = parseInt(updatedData.daysInMonthOverride);
+                        if (updatedData.daysInMonthOverride !== intValue) {
+                            updatedData.daysInMonthOverride = intValue;
+                            changed = true;
+                        }
+                    }
+
+                    return changed ? updatedData : undefined;
+                })
+                .then((result) => {
+                    if (result.committed) {
+                        console.log(`Goals for ${monthKey} ${result.snapshot.val() ? 'updated' : 'initialized'} in Firebase.`);
+                        monthlyGoals[monthKey] = result.snapshot.val();
+                        resolve(monthlyGoals[monthKey]);
+                    } else {
+                        monthlyGoals[monthKey] = result.snapshot.val();
+                        resolve(monthlyGoals[monthKey]);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error initializing/updating goals in Firebase:", error);
+                    showToast(`Error initializing goals: ${error.message || error.code}`, 'error');
+                    reject(error);
+                });
+            });
+        }
+
+        async function setMonthlyGoalProperty(date, property, value) {
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            if (!monthlyGoals[monthKey]) {
+                monthlyGoals[monthKey] = {};
+            }
+            monthlyGoals[monthKey][property] = value; 
+
+            try {
+                await monthlyGoalsRef.child(monthKey).update({ [property]: value });
+                console.log(`Property ${property} of goals for ${monthKey} updated in Firebase.`);
+                updateUI(); 
+            } catch (error) {
+                console.error("Error updating goal property in Firebase:", error);
+                showToast(`Error updating ${property}: ${error.message || error.code}`, 'error');
+            }
+        }
+
+        async function navigatePeriod(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            currentDate.setDate(1);
+            
+            await getMonthlyGoals(currentDate);
+            
+            const firstDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            document.getElementById('comparisonStartDateFilter').value = formatDateToYYYYMM(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1));
+            document.getElementById('comparisonEndDateFilter').value = formatDateToYYYYMM(firstDayOfCurrentMonth); 
+
+            document.getElementById('distributionStartDateFilter').value = formatDateToYYYYMM(firstDayOfCurrentMonth);
+            document.getElementById('distributionEndDateFilter').value = formatDateToYYYYMM(lastDayOfCurrentMonth);
+
+            updateUI();
+        }
+
+        async function updateUI() {
+            const monthKey = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            let currentMonthGoals = monthlyGoals[monthKey];
+            
+            if (!currentMonthGoals) {
+                console.warn(`Goals for ${monthKey} not available locally. Waiting for initialization...`);
+                currentMonthGoals = await getMonthlyGoals(currentDate); 
+            }
+
+            if (!currentMonthGoals) {
+                console.error("Current month goals could not be loaded/initialized. Displaying default values.");
+                currentMonthGoals = {
+                    breakEven: 0, revenueGoal: 0, growthGoal: 0, monthlyCost: 0, daysInMonthOverride: 1
+                };
+            }
+
+            updateCurrentPeriodLabel();
+            updateGoalsDisplay();
+            updateChartsData();
+            const daysInput = document.getElementById('daysInMonthOverride');
+            const daysValue = currentMonthGoals.daysInMonthOverride;
+            const totalDaysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            
+            if (!isNaN(daysValue) && daysValue > 0 && daysValue <= totalDaysInMonth) {
+                if (daysInput.value !== daysValue.toString()) {
+                    daysInput.value = daysValue;
+                }
+            } else {
+                const workingDays = calculateWorkingDaysInMonth(currentDate);
+                daysInput.value = workingDays;
+            }
+        }
+
+        function updateCurrentPeriodLabel() {
+            const label = getMonthName(currentDate.getMonth()) + ' ' + currentDate.getFullYear();
+            document.getElementById('currentPeriodLabel').textContent = label;
+        }
+
+        function updateGoalsDisplay() {
+            const monthKey = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const currentMonthGoals = monthlyGoals[monthKey];
+            const monthlyTotal = getMonthlyTotal(currentDate);
+            
+            document.getElementById('monthlyAchievedAmount').textContent = formatCurrency(monthlyTotal);
+
+            const lastMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+            const lastMonthTotal = getMonthlyTotal(lastMonthDate);
+            document.getElementById('lastMonthAmount').textContent = formatCurrency(lastMonthTotal);
+
+            let comparisonValue = monthlyTotal - lastMonthTotal;
+            let comparisonPercent = lastMonthTotal > 0 ? (comparisonValue / lastMonthTotal) * 100 : 0;
+
+            document.getElementById('monthlyComparisonValue').textContent = formatCurrency(comparisonValue);
+            updatePercentageDisplay('monthlyComparisonPercent', comparisonPercent, comparisonValue);
+            document.getElementById('monthlyComparisonText').textContent = getComparisonText(comparisonValue);
+            
+            updateGoalCard('breakEven', monthlyTotal, currentMonthGoals.breakEven, 'Meta Bronze', 'Ponto de Equilíbrio', 'bronze');
+            updateGoalCard('revenueGoal', monthlyTotal, currentMonthGoals.revenueGoal, 'Meta Prata', 'Meta de Faturamento', 'silver');
+            updateGoalCard('growthGoal', monthlyTotal, currentMonthGoals.growthGoal, 'Meta Ouro', 'Meta de Crescimento', 'gold');
+
+            document.getElementById('monthlyCostAmount').textContent = formatCurrency(currentMonthGoals.monthlyCost);
+
+            const profitMargin = monthlyTotal - currentMonthGoals.monthlyCost;
+            const profitMarginPercentage = monthlyTotal > 0 ? (profitMargin / monthlyTotal) * 100 : 0;
+
+            document.getElementById('profitMarginAmount').textContent = formatCurrency(profitMargin);
+            updatePercentageDisplay('profitMarginPercent', profitMarginPercentage, profitMargin);
+            document.getElementById('profitMarginText').textContent = getProfitMarginText(profitMargin);
+        }
+
+        function updatePercentageDisplay(elementId, percentage, value) {
+            const span = document.getElementById(elementId);
+            span.textContent = `${percentage.toFixed(0)}%`;
+            span.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-gray-100', 'text-gray-800', 'dark:bg-green-700', 'dark:text-green-100', 'dark:bg-red-700', 'dark:text-red-100', 'dark:bg-gray-700', 'dark:text-gray-100');
+
+            if (value > 0) {
+                span.classList.add('bg-green-100', 'text-green-800', 'dark:bg-green-700', 'dark:text-green-100');
+            } else if (value < 0) {
+                span.classList.add('bg-red-100', 'text-red-800', 'dark:bg-red-700', 'dark:text-red-100');
+            } else {
+                span.classList.add('bg-gray-100', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-100');
+            }
+        }
+
+        function getComparisonText(value) {
+            if (value > 0) {
+                return `Aumento de ${formatCurrency(value)} em relação ao mês passado.`;
+            } else if (value < 0) {
+                return `Redução de ${formatCurrency(Math.abs(value))} em relação ao mês passado.`;
+            } else {
+                return `Igual ao mês passado.`;
+            }
+        }
+
+        function getProfitMarginText(value) {
+            if (value > 0) {
+                return `Lucro de ${formatCurrency(value)} sobre as vendas. Excelente!`;
+            } else if (value < 0) {
+                return `Prejuízo de ${formatCurrency(Math.abs(value))} sobre as vendas. Atenção!`;
+            } else {
+                return `Sem lucro ou prejuízo. Fique de olho!`;
+            }
+        }
+
+        function updateGoalCard(goalType, monthlyTotal, goalAmount, goalName, goalDescription, colorClass) {
+            document.getElementById(`${goalType}Amount`).textContent = formatCurrency(goalAmount);
+            document.getElementById(`${goalType}Achieved`).textContent = formatCurrency(monthlyTotal);
+            const percentage = goalAmount > 0 ? Math.min(Math.round((monthlyTotal / goalAmount) * 100), 100) : 0;
+            document.getElementById(`${goalType}Percentage`).textContent = `${percentage}%`;
+            document.getElementById(`${goalType}Progress`).style.width = `${percentage}%`;
+            
+            const remaining = Math.max(0, goalAmount - monthlyTotal);
+            let comparisonText = '';
+            if (monthlyTotal >= goalAmount) {
+                comparisonText = `Parabéns! Você atingiu a ${goalName}! 🎉`;
+            } else {
+                comparisonText = `Faltam ${formatCurrency(remaining)} para a ${goalName}. Continue assim!`;
+            }
+            document.getElementById(`${goalType}ComparisonText`).textContent = comparisonText;
+            
+            const dailyGoalValue = getDailyGoalForGoalType(currentDate, goalType);
+            document.getElementById(`${goalType}DailyGoal`).textContent = formatCurrency(dailyGoalValue);
+        }
+
+        async function updateDaysInMonth() {
+            const daysInput = document.getElementById('daysInMonthOverride');
+            const newDays = parseInt(daysInput.value);
+            const totalDaysInCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            const workingDaysInCurrentMonth = calculateWorkingDaysInMonth(currentDate);
+
+            if (!isNaN(newDays) && newDays > 0 && newDays <= totalDaysInCurrentMonth) {
+                await setMonthlyGoalProperty(currentDate, 'daysInMonthOverride', newDays);
+                showToast('Número de dias trabalhados atualizado!', 'success');
+            } else {
+                const monthKey = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+                const currentDays = monthlyGoals[monthKey]?.daysInMonthOverride || workingDaysInCurrentMonth;
+                daysInput.value = currentDays;
+                showToast(`Por favor, insira um número válido de dias (entre 1 e ${totalDaysInCurrentMonth}).`, 'error');
+            }
+        }
+
+        let filteredLaunches = [];
+        
+        function updateLaunchesTable() {
+            const tableBody = document.getElementById('launchesTableBody');
+            tableBody.innerHTML = ''; 
+            
+            let totalFilteredAmount = 0;
+
+            filteredLaunches = launches.filter(launch => {
+                const launchDate = launch.date;
+                
+                const filterStartDate = activeFilters.startDate;
+                const filterEndDate = activeFilters.endDate;
+                const filterNotes = activeFilters.filterNotes.toLowerCase();
+
+                if (filterStartDate && launchDate < filterStartDate) {
+                    return false;
+                }
+                if (filterEndDate) {
+                    const adjustedFilterEndDate = new Date(filterEndDate.getFullYear(), filterEndDate.getMonth(), filterEndDate.getDate(), 23, 59, 59, 999);
+                    if (launchDate > adjustedFilterEndDate) { 
+                        return false;
+                    }
+                }
+                
+                if (filterNotes && (!launch.notes || !launch.notes.toLowerCase().includes(filterNotes))) {
+                    return false;
+                }
+                
+                return true; 
+            });
+            
+            filteredLaunches.sort((a, b) => b.date.getTime() - a.date.getTime());
+            
+            const launchesToDisplay = filteredLaunches;
+
+            if (launchesToDisplay.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="4" class="px-4 py-3 sm:px-6 sm:py-4 text-center text-sm text-gray-500 dark:text-gray-400">Nenhum lançamento encontrado</td>';
+                tableBody.appendChild(row);
+            } else {
+                launchesToDisplay.forEach((launch) => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                    
+                    const dateCell = document.createElement('td');
+                    dateCell.className = 'px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300';
+                    dateCell.textContent = formatDateToDDMMYYYY(launch.date); 
+                    
+                    const valueCell = document.createElement('td');
+                    valueCell.className = 'px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-medium dark:text-gray-100';
+                    valueCell.textContent = formatCurrency(launch.value); 
+                    totalFilteredAmount += parseFloat(launch.value);
+                    
+                    const notesCell = document.createElement('td');
+                    notesCell.className = 'px-4 py-3 sm:px-6 sm:py-4 text-sm text-gray-500 max-w-xs truncate dark:text-gray-300';
+                    notesCell.textContent = launch.notes || '-';
+                    if (launch.notes && launch.notes.length > 30) {
+                        notesCell.title = launch.notes; 
+                    }
+                    
+                    const actionsCell = document.createElement('td');
+                    actionsCell.className = 'px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500 flex space-x-2';
+                    
+                    const editButton = document.createElement('button');
+                    editButton.className = 'text-blue-600 hover:text-blue-800 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-blue-400 dark:hover:text-blue-300 dark:focus:ring-blue-600';
+                    editButton.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>';
+                    editButton.onclick = () => openEditLaunchModal(launch.id);
+                    editButton.setAttribute('aria-label', `Editar lançamento de ${formatCurrency(launch.value)} em ${formatDateToDDMMYYYY(launch.date)}`);
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'text-red-600 hover:text-red-800 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-red-400 dark:text-red-400 dark:hover:text-red-300 dark:focus:ring-red-600';
+                    deleteButton.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                    deleteButton.onclick = () => openConfirmDeleteModal(launch.id);
+                    deleteButton.setAttribute('aria-label', `Excluir lançamento de ${formatCurrency(launch.value)} em ${formatDateToDDMMYYYY(launch.date)}`);
+                    
+                    actionsCell.appendChild(editButton);
+                    actionsCell.appendChild(deleteButton);
+                    
+                    row.appendChild(dateCell);
+                    row.appendChild(valueCell);
+                    row.appendChild(notesCell);
+                    row.appendChild(actionsCell);
+                    
+                    tableBody.appendChild(row);
+                });
+            }
+            
+            document.getElementById('filteredTotalAmount').textContent = formatCurrency(totalFilteredAmount);
+        }
+
+        function applyFilters() {
+            const startDateStr = document.getElementById('startDateFilter').value;
+            const endDateStr = document.getElementById('endDateFilter').value;
+            const filterNotesStr = document.getElementById('filterNotes').value;
+
+            let isValid = true;
+
+            if (startDateStr && !validateDateDDMMYYYY(startDateStr)) {
+                showToast('Por favor, insira uma data inicial válida (DD/MM/AAAA)!', 'error');
+                isValid = false;
+            }
+            if (endDateStr && !validateDateDDMMYYYY(endDateStr)) {
+                showToast('Por favor, insira uma data final válida (DD/MM/AAAA)!', 'error');
+                isValid = false;
+            }
+
+            const parsedStartDate = startDateStr ? parseDateFromDDMMYYYY(startDateStr) : null;
+            const parsedEndDate = endDateStr ? parseDateFromDDMMYYYY(endDateStr) : null;
+
+            if (parsedStartDate && parsedEndDate && parsedStartDate > parsedEndDate) {
+                showToast('A data inicial não pode ser posterior à data final.', 'error');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return;
+            }
+
+            activeFilters = {
+                startDate: parsedStartDate,
+                endDate: parsedEndDate,
+                filterNotes: filterNotesStr.trim()
+            };
+            
+            updateLaunchesTable(); 
+        }
+
+        function validateValue(value) {
+            const numValue = parseFloat(value.replace(',', '.'));
+            return !isNaN(numValue) && numValue > 0;
+        }
+
+        function validateDateDDMMYYYY(dateString) {
+            const datePattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = dateString.match(datePattern);
+            if (!match) return false;
+
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1;
+            const year = parseInt(match[3], 10);
+
+            const date = new Date(year, month, day);
+            return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day;
+        }
+
+        function parseDateFromDDMMYYYY(dateString) {
+            const parts = dateString.split('/');
+            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+        }
+
+        async function addLaunch() {
+            const dateInput = document.getElementById('launchDate').value;
+            const valueInput = document.getElementById('revenue').value;
+            const notes = document.getElementById('notes');
+
+            if (!dateInput || !validateDateDDMMYYYY(dateInput)) {
+                showToast('Por favor, selecione uma data válida (DD/MM/AAAA)!', 'error');
+                return;
+            }
+            
+            if (!valueInput || !validateValue(valueInput)) {
+                showToast('Por favor, preencha um valor válido e positivo para a venda!', 'error');
+                return;
+            }
+            
+            const value = parseFloat(valueInput.replace(',', '.'));
+            const launchDateObj = parseDateFromDDMMYYYY(dateInput);
+
+            const now = new Date();
+            launchDateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+
+            const newLaunchData = {
+                date: launchDateObj.toISOString(),
+                value: value,
+                notes: notes.value
+            };
+            
+            try {
+                await launchesRef.push(newLaunchData);
+                clearForm(); 
+                showToast('Lançamento adicionado com sucesso!', 'success');
+            } catch (error) {
+                console.error("Error adding launch:", error);
+                showToast(`Error adding launch: ${error.message || error.code}`, 'error');
+            }
+        }
+
+        let launchIdToDelete = null;
+        function openConfirmDeleteModal(id) {
+            launchIdToDelete = id;
+            document.getElementById('confirmDeleteModal').classList.remove('hidden');
+            document.getElementById('confirmDeleteBtn').onclick = () => deleteLaunchConfirmed();
+        }
+
+        function closeConfirmDeleteModal() {
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
+            launchIdToDelete = null;
+        }
+
+        async function deleteLaunchConfirmed() {
+            if (!launchIdToDelete) return;
+            try {
+                await launchesRef.child(launchIdToDelete).remove();
+                showToast('Lançamento excluído.', 'info');
+                closeConfirmDeleteModal();
+            }
+            catch (error) {
+                console.error("Error deleting launch:", error);
+                showToast(`Error deleting launch: ${error.message || error.code}`, 'error');
+            }
+        }
+
+        function openEditLaunchModal(id) {
+            const launch = launches.find(l => l.id === id);
+            if (!launch) {
+                console.error("Launch not found for editing:", id);
+                showToast('Error: Launch not found for editing.', 'error');
+                return; 
+            }
+            
+            currentEditLaunchId = id; 
+            fpEditLaunchDate.setDate(launch.date, true); 
+            document.getElementById('editRevenue').value = formatCurrencyForEdit(launch.value);
+            document.getElementById('editNotes').value = launch.notes || '';
+            
+            document.getElementById('editLaunchModal').classList.remove('hidden'); 
+            document.getElementById('editLaunchDate').focus(); 
+        }
+
+        function closeEditLaunchModal() {
+            document.getElementById('editLaunchModal').classList.add('hidden'); 
+            currentEditLaunchId = null; 
+        }
+
+        async function saveEditedLaunch() {
+            const launchId = currentEditLaunchId;
+            if (!launchId) {
+                showToast("Error: No launch selected for editing.", 'error');
+                return;
+            }
+            
+            const dateInput = document.getElementById('editLaunchDate').value; 
+            const valueInput = document.getElementById('editRevenue').value;
+            const notes = document.getElementById('editNotes').value;
+            
+            if (!dateInput || !validateDateDDMMYYYY(dateInput)) {
+                showToast('Por favor, selecione uma data válida (DD/MM/AAAA) para o lançamento editado!', 'error');
+                return;
+            }
+            
+            if (!valueInput || !validateValue(valueInput)) {
+                showToast('Por favor, preencha um valor válido e positivo para a venda editada!', 'error');
+                return;
+            }
+            
+            const value = parseFloat(valueInput.replace(',', '.'));
+            const newLaunchDateObj = parseDateFromDDMMYYYY(dateInput);
+
+            const originalLaunch = launches.find(l => l.id === launchId);
+            if (originalLaunch && newLaunchDateObj.toDateString() === originalLaunch.date.toDateString()) {
+                newLaunchDateObj.setHours(originalLaunch.date.getHours(), originalLaunch.date.getMinutes(), originalLaunch.date.getSeconds(), originalLaunch.date.getMilliseconds());
+            } else {
+                newLaunchDateObj.setHours(0, 0, 0, 0);
+            }
+
+            const updatedLaunchData = {
+                date: newLaunchDateObj.toISOString(),
+                value: value,
+                notes: notes
+            };
+            
+            try {
+                await launchesRef.child(launchId).update(updatedLaunchData);
+                closeEditLaunchModal(); 
+                showToast('Lançamento atualizado com sucesso!', 'success');
+            } catch (error) {
+                console.error("Error updating launch:", error);
+                showToast(`Error updating launch: ${error.message || error.code}`, 'error');
+            }
+        }
+
+        function openGoalEditModal(goalType) {
+            currentEditGoalType = goalType;
+            const monthKey = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const currentMonthGoals = monthlyGoals[monthKey];
+            const currentValue = currentMonthGoals ? currentMonthGoals[goalType] : 0; 
+            
+            let modalTitle = '';
+            switch (goalType) {
+                case 'breakEven': modalTitle = 'Editar Ponto de Equilíbrio'; break;
+                case 'revenueGoal': modalTitle = 'Editar Meta de Faturamento'; break;
+                case 'growthGoal': modalTitle = 'Editar Meta de Crescimento'; break;
+                case 'monthlyCost': modalTitle = 'Editar Custo Mensal'; break;
+                default: modalTitle = 'Editar Valor'; break;
+            }
+
+            document.getElementById('editGoalModalTitle').textContent = modalTitle;
+            document.getElementById('editGoalValue').value = formatCurrencyForEdit(currentValue);
+            document.getElementById('editGoalModal').classList.remove('hidden');
+            document.getElementById('editGoalValue').focus();
+        }
+
+        function closeEditGoalModal() {
+            document.getElementById('editGoalModal').classList.add('hidden');
+            currentEditGoalType = null;
+        }
+
+        async function saveEditedGoal() {
+            const goalType = currentEditGoalType;
+            if (!goalType) return;
+
+            const valueInput = document.getElementById('editGoalValue').value;
+            const newValue = parseFloat(valueInput.replace(',', '.'));
+
+            if (isNaN(newValue) || newValue < 0) {
+                showToast('Por favor, digite um valor válido e não negativo!', 'error');
+                return;
+            }
+
+            await setMonthlyGoalProperty(currentDate, goalType, newValue);
+            closeEditGoalModal();
+            showToast(`${getGoalTypeName(goalType)} atualizado!`, 'success');
+        }
+
+        function getGoalTypeName(goalType) {
+            switch (goalType) {
+                case 'breakEven': return 'Ponto de Equilíbrio';
+                case 'revenueGoal': return 'Meta de Faturamento';
+                case 'growthGoal': return 'Meta de Crescimento';
+                case 'monthlyCost': return 'Custo Mensal';
+                default: return 'Valor';
+            }
+        }
+
+        function clearForm() {
+            fpLaunchDate.setDate(new Date(), true);
+            document.getElementById('revenue').value = '';
+            document.getElementById('notes').value = '';
+            showToast('Formulário limpo.', 'info');
+        }
+
+        function initCharts() {
+            const commonChartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Valor (R$)',
+                            color: document.body.classList.contains('dark') ? '#f1f1f1' : '#333'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            },
+                            color: document.body.classList.contains('dark') ? '#e0e0e0' : '#555'
+                        },
+                        grid: {
+                            color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            color: document.body.classList.contains('dark') ? '#e0e0e0' : '#555'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatCurrency(context.raw);
+                            }
+                        },
+                        backgroundColor: document.body.classList.contains('dark') ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.7)',
+                        titleColor: document.body.classList.contains('dark') ? '#f1f1f1' : '#fff',
+                        bodyColor: document.body.classList.contains('dark') ? '#e0e0e0' : '#fff'
+                    },
+                    legend: {
+                        labels: {
+                            color: document.body.classList.contains('dark') ? '#f1f1f1' : '#333'
+                        }
+                    }
+                }
+            };
+
+            const salesDistributionCtx = document.getElementById('salesDistributionChart').getContext('2d');
+            if (salesDistributionChart) salesDistributionChart.destroy(); // Destroy existing chart
+            salesDistributionChart = new Chart(salesDistributionCtx, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonChartOptions,
+                    plugins: {
+                        ...commonChartOptions.plugins,
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            const monthlyComparisonCtx = document.getElementById('monthlyComparisonChart').getContext('2d');
+            if (monthlyComparisonChart) monthlyComparisonChart.destroy(); // Destroy existing chart
+            monthlyComparisonChart = new Chart(monthlyComparisonCtx, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonChartOptions,
+                    plugins: {
+                        ...commonChartOptions.plugins,
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            const dailyPerformanceCtx = document.getElementById('dailyPerformanceChart').getContext('2d');
+            if (dailyPerformanceChart) dailyPerformanceChart.destroy(); // Destroy existing chart
+            dailyPerformanceChart = new Chart(dailyPerformanceCtx, {
+                type: 'bar',
+                data: { labels: [], datasets: [] },
+                options: {
+                    ...commonChartOptions,
+                    plugins: {
+                        ...commonChartOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const dayIndex = context.dataIndex;
+                                    const sales = context.dataset.data[dayIndex];
+                                    const goalDataset = dailyPerformanceChart.data.datasets.find(ds => ds.label === 'Meta Diária de Faturamento');
+                                    const goal = goalDataset ? goalDataset.data[dayIndex] : 0; 
+                                    
+                                    const difference = sales - goal;
+                                    const percentageDiff = goal > 0 ? (difference / goal) * 100 : 0;
+
+                                    let resultText = '';
+                                    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayIndex + 1);
+                                    if (dayDate.getDay() === 0) {
+                                        resultText = 'Dia não trabalhado'; 
+                                    } else if (sales >= goal) {
+                                        resultText = 'Meta Atingida!';
+                                    } else {
+                                        resultText = 'Abaixo da Meta';
+                                    }
+
+                                    return [
+                                        `Venda do Dia: ${formatCurrency(sales)}`,
+                                        `Meta do Dia: ${formatCurrency(goal)}`,
+                                        `Resultado: ${resultText}`,
+                                        `Diferença: ${formatCurrency(difference)} (${percentageDiff.toFixed(2)}%)`
+                                    ];
+                                }
+                            }
+                        },
+                        legend: { display: true, position: 'top', labels: { color: document.body.classList.contains('dark') ? '#f1f1f1' : '#333' } }
+                    }
+                }
+            });
+
+            updateChartsData(); 
+        }
+
+        function updateChartsData() {
+            // Update chart options for dark mode
+            const isDarkMode = document.body.classList.contains('dark');
+            const textColor = isDarkMode ? '#f1f1f1' : '#333';
+            const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            const tickColor = isDarkMode ? '#e0e0e0' : '#555';
+            const tooltipBg = isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.7)';
+            const tooltipTitleColor = isDarkMode ? '#f1f1f1' : '#fff';
+            const tooltipBodyColor = isDarkMode ? '#e0e0e0' : '#fff';
+
+            [salesDistributionChart, monthlyComparisonChart, dailyPerformanceChart].forEach(chart => {
+                if (chart) {
+                    chart.options.scales.y.title.color = textColor;
+                    chart.options.scales.y.ticks.color = tickColor;
+                    chart.options.scales.y.grid.color = gridColor;
+                    chart.options.scales.x.ticks.color = tickColor;
+                    chart.options.scales.x.grid.color = gridColor;
+                    chart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                    chart.options.plugins.tooltip.titleColor = tooltipTitleColor;
+                    chart.options.plugins.tooltip.bodyColor = tooltipBodyColor;
+                    if (chart.options.plugins.legend) {
+                        chart.options.plugins.legend.labels.color = textColor;
+                    }
+                }
+            });
+
+            applyDailyPerformanceFilter();
+            applyDistributionFilter(); 
+            applyComparisonFilter(); 
+        }
+
+        function getDailyGoalForGoalType(date, goalType) {
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            const currentMonthGoals = monthlyGoals[monthKey];
+
+            if (!currentMonthGoals) {
+                console.warn(`Goals for ${monthKey} not found when calculating daily goal for ${goalType}. Returning 0.`);
+                return 0;
+            }
+
+            let monthlyGoal = parseFloat(currentMonthGoals[goalType]);
+            let daysInMonthOverride = parseInt(currentMonthGoals.daysInMonthOverride);
+
+            if (isNaN(monthlyGoal) || monthlyGoal === null) monthlyGoal = 0;
+            if (isNaN(daysInMonthOverride) || daysInMonthOverride === null || daysInMonthOverride <= 0) {
+                daysInMonthOverride = calculateWorkingDaysInMonth(date);
+                if (daysInMonthOverride <= 0) daysInMonthOverride = 1;
+            }
+
+            if (date.getDay() === 0 && (goalType === 'breakEven' || goalType === 'revenueGoal' || goalType === 'growthGoal')) { 
+                return 0; 
+            }
+            
+            let divisor;
+            if (goalType === 'monthlyCost') {
+                divisor = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            } else {
+                const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                const currentMonthGoals = monthlyGoals[monthKey];
+                const customDays = currentMonthGoals?.daysInMonthOverride;
+                
+                if (customDays && !isNaN(customDays) && customDays > 0) {
+                    divisor = customDays;
+                } else {
+                    divisor = calculateWorkingDaysInMonth(date);
+                }
+            }
+            
+            if (divisor <= 0) {
+                console.warn(`Invalid divisor (${divisor}) for daily goal of ${goalType} in ${monthKey}. Returning 0.`);
+                return 0;
+            }
+
+            return monthlyGoal / divisor; 
+        }
+        
+        function applyDailyPerformanceFilter() {
+            const selectedDate = currentDate; 
+            updateDailyPerformanceChart(selectedDate);
+        }
+
+        function updateDailyPerformanceChart(monthDate) {
+            const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+            const labels = Array.from({length: daysInMonth}, (_, i) => (i + 1).toString()); 
+            let dailySales = Array(daysInMonth).fill(0);
+            let dailyRevenueGoalData = Array(daysInMonth).fill(0); 
+            
+            launches.forEach(launch => {
+                const launchDateObj = launch.date; 
+                if (launchDateObj.getMonth() === monthDate.getMonth() && 
+                    launchDateObj.getFullYear() === monthDate.getFullYear()) {
+                    const day = launchDateObj.getDate() - 1; 
+                    dailySales[day] += parseFloat(launch.value);
+                }
+            });
+
+            const monthKey = `${monthDate.getFullYear()}-${(monthDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const currentMonthGoals = monthlyGoals[monthKey];
+            const customDays = currentMonthGoals?.daysInMonthOverride;
+            
+            for (let i = 0; i < daysInMonth; i++) {
+                const dayDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), i + 1);
+                if (customDays && dayDate.getDay() === 0) {
+                    dailyRevenueGoalData[i] = 0;
+                } else {
+                    dailyRevenueGoalData[i] = getDailyGoalForGoalType(dayDate, 'revenueGoal');
+                }
+            }
+
+            const isDarkMode = document.body.classList.contains('dark');
+            const backgroundColors = dailySales.map((sales, index) => {
+                const goal = dailyRevenueGoalData[index];
+                const dayDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), index + 1);
+                if (dayDate.getDay() === 0) {
+                    return isDarkMode ? 'rgba(100, 100, 100, 0.7)' : 'rgba(200, 200, 200, 0.7)';
+                } else if (sales >= goal) {
+                    return isDarkMode ? 'rgba(75, 192, 192, 0.7)' : 'rgba(75, 192, 192, 0.7)';
+                } else {
+                    return isDarkMode ? 'rgba(255, 99, 132, 0.7)' : 'rgba(255, 99, 132, 0.7)';
+                }
+            });
+
+            const borderColors = dailySales.map((sales, index) => {
+                const goal = dailyRevenueGoalData[index];
+                const dayDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), index + 1);
+                if (dayDate.getDay() === 0) {
+                    return isDarkMode ? 'rgba(100, 100, 100, 1)' : 'rgba(200, 200, 200, 1)';
+                } else if (sales >= goal) {
+                    return isDarkMode ? 'rgba(75, 192, 192, 1)' : 'rgba(75, 192, 192, 1)';
+                } else {
+                    return isDarkMode ? 'rgba(255, 99, 132, 1)' : 'rgba(255, 99, 132, 1)';
+                }
+            });
+
+            dailyPerformanceChart.data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Vendas Diárias',
+                        data: dailySales,
+                        backgroundColor: backgroundColors, 
+                        borderColor: borderColors, 
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        pointRadius: 5,
+                        pointBackgroundColor: backgroundColors,
+                        pointBorderColor: borderColors,
+                        pointBorderWidth: 1
+                    },
+                    {
+                        label: 'Meta Diária de Faturamento',
+                        data: dailyRevenueGoalData, 
+                        type: 'line',
+                        borderColor: isDarkMode ? 'rgba(255, 200, 100, 1)' : 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0.1 
+                    }
+                ]
+            };
+            dailyPerformanceChart.update();
+        }
+
+        function applyDistributionFilter() {
+            const startDateMonthStr = document.getElementById('distributionStartDateFilter').value;
+            const endDateMonthStr = document.getElementById('distributionEndDateFilter').value;
+
+            let startDate = startDateMonthStr ? new Date(startDateMonthStr + '-01T00:00:00') : null;
+            let endDate = endDateMonthStr ? new Date(endDateMonthStr + '-01T00:00:00') : null;
+            
+            if (endDate) { 
+                endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0, 23, 59, 59, 999);
+            }
+
+            if (startDate && endDate && startDate > endDate) {
+                showToast('A data inicial não pode ser posterior à data final para o filtro de distribuição.', 'error');
+                const firstDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                const lastDayOfCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                document.getElementById('distributionStartDateFilter').value = formatDateToYYYYMM(firstDayOfCurrentMonth);
+                document.getElementById('distributionEndDateFilter').value = formatDateToYYYYMM(lastDayOfCurrentMonth);
+                startDate = firstDayOfCurrentMonth;
+                endDate = lastDayOfCurrentMonth;
+            }
+            updateSalesDistributionChart(startDate, endDate);
+        }
+
+        function updateSalesDistributionChart(startDate = null, endDate = null) {
+            const labels = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            const data = Array(7).fill(0); 
+            
+            const launchesInPeriod = getSalesDataForPeriod(startDate, endDate);
+
+            launchesInPeriod.forEach(launch => {
+                const launchDateObj = launch.date;
+                const day = launchDateObj.getDay(); 
+                data[day] += parseFloat(launch.value);
+            });
+
+            const isDarkMode = document.body.classList.contains('dark');
+            salesDistributionChart.data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total de Vendas',
+                        data: data,
+                        backgroundColor: isDarkMode ? 'rgba(168, 85, 247, 0.7)' : 'rgba(168, 85, 247, 0.7)', 
+                        borderColor: isDarkMode ? 'rgba(168, 85, 247, 1)' : 'rgba(168, 85, 247, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            };
+            salesDistributionChart.update();
+        }
+
+        function applyComparisonFilter() {
+            const startDateMonthStr = document.getElementById('comparisonStartDateFilter').value;
+            const endDateMonthStr = document.getElementById('comparisonEndDateFilter').value;
+
+            let startDate = startDateMonthStr ? new Date(startDateMonthStr + '-01T00:00:00') : null;
+            let endDate = endDateMonthStr ? new Date(endDateMonthStr + '-01T00:00:00') : null;
+            
+            if (endDate) { 
+                endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0, 23, 59, 59, 999);
+            }
+
+            if (startDate && endDate && startDate > endDate) {
+                showToast('A data inicial não pode ser posterior à data final para o filtro de comparação.', 'error');
+                document.getElementById('comparisonStartDateFilter').value = formatDateToYYYYMM(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1));
+                document.getElementById('comparisonEndDateFilter').value = formatDateToYYYYMM(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1);
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            }
+            updateMonthlyComparisonChart(startDate, endDate);
+        }
+
+        function updateMonthlyComparisonChart(startDate = null, endDate = null) {
+            let labels = [];
+            let data = [];
+            let totalSalesForPeriod = 0;
+            let totalCostsForPeriod = 0;
+            const summaryTableBody = document.getElementById('comparisonSummaryTableBody');
+            summaryTableBody.innerHTML = ''; 
+
+            if (!startDate || isNaN(startDate.getTime())) {
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, 1);
+            }
+            if (!endDate || isNaN(endDate.getTime())) {
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            }
+
+            let currentMonthIterator = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            while (currentMonthIterator <= endDate) {
+                const monthLabel = getMonthName(currentMonthIterator.getMonth()) + ' ' + currentMonthIterator.getFullYear();
+                labels.push(monthLabel);
+                
+                const monthlyTotal = getMonthlyTotal(currentMonthIterator);
+                const monthKey = `${currentMonthIterator.getFullYear()}-${(currentMonthIterator.getMonth() + 1).toString().padStart(2, '0')}`;
+                const monthlyCost = monthlyGoals[monthKey] ? monthlyGoals[monthKey].monthlyCost : 0; 
+                
+                data.push(monthlyTotal);
+                
+                totalSalesForPeriod += monthlyTotal;
+                totalCostsForPeriod += monthlyCost;
+
+                const profitMarginMonth = monthlyTotal - monthlyCost;
+                const profitMarginPercentMonth = monthlyTotal > 0 ? (profitMarginMonth / monthlyTotal) * 100 : 0;
+
+                const row = summaryTableBody.insertRow();
+                row.insertCell().textContent = monthLabel;
+                row.insertCell().textContent = formatCurrency(monthlyTotal);
+                row.insertCell().textContent = formatCurrency(monthlyCost);
+                
+                const profitValueCell = row.insertCell();
+                profitValueCell.textContent = formatCurrency(profitMarginMonth);
+                profitValueCell.classList.add('profit-value');
+                if (profitMarginMonth >= 0) {
+                    profitValueCell.classList.add('positive');
+                } else {
+                    profitValueCell.classList.add('negative');
+                }
+
+                const profitPercentCell = row.insertCell();
+                profitPercentCell.textContent = `${profitMarginPercentMonth.toFixed(2)}%`;
+                profitPercentCell.classList.add('profit-percent');
+                if (profitMarginPercentMonth >= 0) {
+                    profitPercentCell.classList.add('positive');
+                } else {
+                    profitPercentCell.classList.add('negative');
+                }
+
+                currentMonthIterator.setMonth(currentMonthIterator.getMonth() + 1);
+            }
+
+            const isDarkMode = document.body.classList.contains('dark');
+            monthlyComparisonChart.data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Vendas',
+                        data: data,
+                        backgroundColor: [
+                            isDarkMode ? 'rgba(75, 192, 192, 0.7)' : 'rgba(75, 192, 192, 0.7)', 
+                            isDarkMode ? 'rgba(255, 200, 100, 0.7)' : 'rgba(255, 159, 64, 0.7)', 
+                            isDarkMode ? 'rgba(54, 162, 235, 0.7)' : 'rgba(54, 162, 235, 0.7)',  
+                            isDarkMode ? 'rgba(153, 102, 255, 0.7)' : 'rgba(153, 102, 255, 0.7)', 
+                            isDarkMode ? 'rgba(255, 99, 132, 0.7)' : 'rgba(255, 99, 132, 0.7)',  
+                            isDarkMode ? 'rgba(255, 205, 86, 0.7)' : 'rgba(255, 205, 86, 0.7)'   
+                        ],
+                        borderColor: [
+                            isDarkMode ? 'rgba(75, 192, 192, 1)' : 'rgba(75, 192, 192, 1)',
+                            isDarkMode ? 'rgba(255, 200, 100, 1)' : 'rgba(255, 159, 64, 1)',
+                            isDarkMode ? 'rgba(54, 162, 235, 1)' : 'rgba(54, 162, 235, 1)',
+                            isDarkMode ? 'rgba(153, 102, 255, 1)' : 'rgba(153, 102, 255, 1)',
+                            isDarkMode ? 'rgba(255, 99, 132, 1)' : 'rgba(255, 99, 132, 1)',
+                            isDarkMode ? 'rgba(255, 205, 86, 1)' : 'rgba(255, 205, 86, 1)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            };
+            monthlyComparisonChart.update();
+
+            const profitMarginForPeriod = totalSalesForPeriod - totalCostsForPeriod;
+            const profitPercentForPeriod = totalSalesForPeriod > 0 ? (profitMarginForPeriod / totalSalesForPeriod) * 100 : 0;
+
+            document.getElementById('reportTotalSales').textContent = formatCurrency(totalSalesForPeriod);
+            document.getElementById('reportTotalCosts').textContent = formatCurrency(totalCostsForPeriod);
+            
+            const totalProfitValueElement = document.getElementById('reportProfitMargin');
+            totalProfitValueElement.textContent = formatCurrency(profitMarginForPeriod);
+            totalProfitValueElement.classList.remove('positive', 'negative');
+            if (profitMarginForPeriod >= 0) {
+                totalProfitValueElement.classList.add('positive');
+            } else {
+                totalProfitValueElement.classList.add('negative');
+            }
+
+            const totalProfitPercentElement = document.getElementById('reportProfitPercent');
+            totalProfitPercentElement.textContent = `${profitPercentForPeriod.toFixed(2)}%`;
+            totalProfitPercentElement.classList.remove('positive', 'negative');
+            if (profitPercentForPeriod >= 0) {
+                totalProfitPercentElement.classList.add('positive');
+            } else {
+                totalProfitPercentElement.classList.add('negative');
+            }
+        }
+
+        function formatDateToDDMMYYYY(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                return 'Data Inválida';
+            }
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        function formatDateToYYYYMM(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                return ''; 
+            }
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            return `${year}-${month}`;
+        }
+        
+        function formatCurrency(value) {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                return 'R$ 0,00';
+            }
+            return 'R$ ' + numValue.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        function formatCurrencyForEdit(value) {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                return '0,00';
+            }
+            return numValue.toFixed(2).replace('.', ','); 
+        }
+        
+        function getMonthName(monthIndex) {
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return months[monthIndex];
+        }
+
+        function getMonthlyTotal(monthStartDate) {
+            const month = monthStartDate.getMonth();
+            const year = monthStartDate.getFullYear();
+            
+            return launches
+                .filter(launch => {
+                    const launchDate = launch.date;
+                    return launchDate.getMonth() === month && 
+                           launchDate.getFullYear() === year;
+                })
+                .reduce((sum, launch) => sum + parseFloat(launch.value), 0);
+        }
+
+        function getSalesDataForPeriod(startDate, endDate) {
+            return launches.filter(launch => {
+                const launchDate = launch.date;
+                const isAfterStart = startDate ? launchDate >= startDate : true;
+                const isBeforeEnd = endDate ? launchDate <= endDate : true; // Corrected to <=
+                return isAfterStart && isBeforeEnd;
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'fixed bottom-4 right-4 z-[100] flex flex-col space-y-2';
+                document.body.appendChild(toastContainer);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`; 
+            
+            let bgColor = 'bg-gray-800';
+            let icon = '';
+
+            switch (type) {
+                case 'success':
+                    bgColor = 'bg-green-500';
+                    icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-500';
+                    icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    break;
+                case 'info':
+                default:
+                    bgColor = 'bg-blue-500';
+                    icon = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    break;
+            }
+
+            toast.classList.add(bgColor);
+            toast.innerHTML = `<div class="flex items-center space-x-2 text-white p-3 rounded-lg shadow-md"> ${icon}<span>${message}</span></div>`;
+            toastContainer.appendChild(toast);
+
+            void toast.offsetWidth; 
+
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove(), {once: true});
+            }, 3000); 
+        }
+    </script>
+</body>
+</html>
